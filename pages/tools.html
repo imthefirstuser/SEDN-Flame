@@ -7,19 +7,19 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Noto Sans SC", sans-serif; background: #fafafa; color: #1a1a1a; min-height: 100vh; }
-  .layout { padding: 48px 200px; }
+  .layout { padding: 50px 250px; margin: 0 64px; }
   .back { display: inline-block; font-size: 13px; color: #999; text-decoration: none; margin-bottom: 16px; }
   .back:hover { color: #333; }
-  .title { font-size: 32px; font-weight: 700; margin-bottom: 32px; }
-  .section-label { font-size: 16px; font-weight: 600; margin-bottom: 12px; }
-  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-  .card { display: block; padding: 2px; border-radius: 4px; text-decoration: none; color: inherit; transition: background 0.12s; }
+  .title { font-size: 56px; font-weight: 700; margin-bottom: 40px; }
+  .section-label { font-size: 20px; font-weight: 900; text-transform: uppercase; margin-bottom: 16px; }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
+  .card { display: flex; padding: 2px; border-radius: 4px; text-decoration: none; color: inherit; cursor: pointer; transition: background 0.12s; margin-bottom: 20px; align-items: flex-start; }
   .card:hover { background: rgba(0,0,0,0.04); }
-  .card svg { width: 27px; height: 35px; fill: #1a1a1a; margin-bottom: 8px; display: block; }
-  .card h5 { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
+  .card svg { width: 27px; height: 35px; fill: #1a1a1a; display: block; flex-shrink: 0; }
+  .card h5 { font-size: 14px; font-weight: 500; margin-bottom: -4px; }
   .card span { font-size: 11px; color: #999; }
   .footer { text-align: center; font-size: 11px; color: #ccc; margin-top: 56px; padding-bottom: 24px; }
-  @media (max-width: 800px) { .layout { padding: 48px 24px; } .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 900px) { .layout { padding: 50px 24px; margin: 0; } .grid { grid-template-columns: repeat(2, 1fr); } }
 </style>
 </head>
 <body>
@@ -30,20 +30,26 @@
 
   <div class="section-label">采购工具</div>
   <div class="grid">
-    <a class="card" href="https://imthefirstuser.github.io/sedn-dashboard/purchase_static/index.html">
+    <a class="card" href="/sedn-dashboard/purchase_static/index.html">
       <svg viewBox="0 0 24 24"><path d="M15.5,14H14.71L14.43,13.73C15.41,12.59 16,11.11 16,9.5A6.5,6.5 0 1,0 9.5,16C11.11,16 12.59,15.41 13.73,14.43L14,14.71V15.5L19,20.49L20.49,19L15.5,14M9.5,14A4.5,4.5 0 1,1 14,9.5A4.5,4.5 0 0,1 9.5,14Z"/></svg>
-      <h5>采购历史查询</h5>
-      <span>按品号/供应商查询</span>
+      <div>
+        <h5>采购历史查询</h5>
+        <span>按品号/供应商查询</span>
+      </div>
     </a>
-    <a class="card" href="https://imthefirstuser.github.io/sedn-dashboard/purchase_2b.html">
+    <a class="card" href="/sedn-dashboard/purchase_2b.html">
       <svg viewBox="0 0 24 24"><path d="M19,21.5H5C4.2,21.5 3.5,20.8 3.5,20V5.5C3.5,4.7 4.2,4 5,4H19C19.8,4 20.5,4.7 20.5,5.5V20C20.5,20.8 19.8,21.5 19,21.5M5,5.5V20H19V5.5H5M6,6H18V8H6V6M6,9H18V11H6V9M6,12H18V14H6V12M6,15H13V17H6V15Z"/></svg>
-      <h5>304#2B 采购明细</h5>
-      <span>价格 · 供应商对比</span>
+      <div>
+        <h5>304#2B 采购明细</h5>
+        <span>价格 · 供应商对比</span>
+      </div>
     </a>
-    <a class="card" href="https://imthefirstuser.github.io/sedn-dashboard/purchase_history.html">
+    <a class="card" href="/sedn-dashboard/purchase_history.html">
       <svg viewBox="0 0 24 24"><path d="M13.5,8H12V13L16.28,15.54L17,14.33L13.5,12.25V8M13,3A9,9 0 0,0 4,12H1L4.96,16.03L9,12H6A7,7 0 0,1 13,5A7,7 0 0,1 20,12A7,7 0 0,1 13,19C11.07,19 9.32,18.21 8.06,16.94L6.64,18.36C8.27,20 10.5,21 13,21A9,9 0 0,0 13,3Z"/></svg>
-      <h5>采购历史</h5>
-      <span>按品号查询</span>
+      <div>
+        <h5>采购历史</h5>
+        <span>按品号查询</span>
+      </div>
     </a>
   </div>
 

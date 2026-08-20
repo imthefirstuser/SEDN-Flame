@@ -7,18 +7,18 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Noto Sans SC", sans-serif; background: #fafafa; color: #1a1a1a; min-height: 100vh; }
-  .layout { padding: 48px 200px; }
-  .greeting { font-size: 42px; font-weight: 700; margin-bottom: 2px; }
-  .date { font-size: 13px; color: #999; margin-bottom: 40px; }
-  .section-label { font-size: 16px; font-weight: 600; margin-bottom: 12px; color: #1a1a1a; }
-  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-  .card { display: block; padding: 2px; border-radius: 4px; text-decoration: none; color: inherit; transition: background 0.12s; }
+  .layout { padding: 50px 250px; margin: 0 64px; }
+  .greeting { font-size: 56px; font-weight: 700; margin-bottom: 0; }
+  .date { font-size: 14px; color: #999; margin-bottom: 40px; }
+  .section-label { font-size: 20px; font-weight: 900; text-transform: uppercase; margin-bottom: 16px; }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
+  .card { display: flex; padding: 2px; border-radius: 4px; text-decoration: none; color: inherit; cursor: pointer; transition: background 0.12s; margin-bottom: 20px; align-items: flex-start; }
   .card:hover { background: rgba(0,0,0,0.04); }
-  .card svg { width: 27px; height: 35px; fill: #1a1a1a; margin-bottom: 8px; display: block; }
-  .card h5 { font-size: 14px; font-weight: 500; margin-bottom: 2px; color: #1a1a1a; }
+  .card svg { width: 27px; height: 35px; fill: #1a1a1a; display: block; flex-shrink: 0; }
+  .card h5 { font-size: 14px; font-weight: 500; margin-bottom: -4px; color: #1a1a1a; }
   .card span { font-size: 11px; color: #999; }
   .footer { text-align: center; font-size: 11px; color: #ccc; margin-top: 56px; padding-bottom: 24px; }
-  @media (max-width: 800px) { .layout { padding: 48px 24px; } .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 900px) { .layout { padding: 50px 24px; margin: 0; } .grid { grid-template-columns: repeat(2, 1fr); } }
 </style>
 </head>
 <body>
@@ -31,13 +31,17 @@
   <div class="grid">
     <a class="card" href="/pages/dashboard.html">
       <svg viewBox="0 0 24 24"><path d="M13,3V9H21V3M13,21H21V11H13M3,21H11V15H3M3,13H11V3H3V13Z"/></svg>
-      <h5>内部看板</h5>
-      <span>排产 · 告警 · 成本 · 采购</span>
+      <div>
+        <h5>内部看板</h5>
+        <span>排产 · 告警 · 成本 · 采购</span>
+      </div>
     </a>
     <a class="card" href="/pages/tools.html">
       <svg viewBox="0 0 24 24"><path d="M22.7,19L13.6,9.9C14.5,7.6 14,4.9 12.1,3C10.1,1 7.1,0.6 4.7,1.7L9,6L6,9L1.6,4.7C0.4,7.1 0.9,10.1 2.9,12.1C4.8,14 7.5,14.5 9.8,13.6L18.9,22.7C19.3,23.1 19.9,23.1 20.3,22.7L22.6,20.4C23.1,20 23.1,19.3 22.7,19Z"/></svg>
-      <h5>工具</h5>
-      <span>采购明细比价 · 历史查询</span>
+      <div>
+        <h5>工具</h5>
+        <span>采购明细比价 · 历史查询</span>
+      </div>
     </a>
   </div>
 
