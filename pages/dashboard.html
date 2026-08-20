@@ -55,7 +55,8 @@ async function go(el, dir, prefix) {
   try {
     const r = await fetch('https://api.github.com/repos/imthefirstuser/sedn-dashboard/contents/' + dir);
     const d = await r.json();
-    const f = d.filter(x => x.type === 'file' && x.name.startsWith(prefix)).sort((a,b) => b.name.localeCompare(a.name))[0];
+    const num = s => { const m = s.match(/_(\d+)\.html/); return m ? parseInt(m[1]) : -1; };
+    const f = d.filter(x => x.type === 'file' && x.name.startsWith(prefix)).sort((a,b) => num(b.name) - num(a.name))[0];
     if (f) el.href = '/sedn-dashboard/' + dir + '/' + f.name;
   } catch(e) {}
 }
