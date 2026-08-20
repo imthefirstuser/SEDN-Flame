@@ -3,91 +3,95 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SEDN 内部看板</title>
+<title>内部看板</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #333; min-height: 100vh; }
-  .header { background: #fff; border-bottom: 1px solid #e0e0e0; padding: 20px 32px; }
-  .header h1 { font-size: 20px; font-weight: 600; }
-  .header p { font-size: 13px; color: #888; margin-top: 4px; }
-  .container { max-width: 960px; margin: 0 auto; padding: 24px 32px; }
-  .section { margin-bottom: 32px; }
-  .section-title { font-size: 14px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
-  .card { background: #fff; border: 1px solid #e8e8e8; border-radius: 8px; padding: 16px 20px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; text-decoration: none; color: inherit; transition: border-color 0.15s; }
-  .card:hover { border-color: #4a90d9; }
-  .card-left { display: flex; align-items: center; gap: 12px; }
-  .card-icon { font-size: 24px; width: 36px; text-align: center; }
-  .card-name { font-size: 15px; font-weight: 500; }
-  .card-desc { font-size: 12px; color: #999; margin-top: 2px; }
-  .card-arrow { color: #ccc; font-size: 18px; }
-  .footer { font-size: 11px; color: #bbb; text-align: right; margin-top: 40px; padding-bottom: 20px; }
+  body { font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #242b33; color: #fff; min-height: 100vh; }
+  .container { max-width: 680px; margin: 0 auto; padding: 40px 24px; }
+  .back { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: rgba(255,255,255,0.4); text-decoration: none; margin-bottom: 24px; }
+  .back:hover { color: rgba(255,255,255,0.7); }
+  .back svg { width: 16px; height: 16px; fill: currentColor; }
+  .title { font-size: 24px; font-weight: 300; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: rgba(255,255,255,0.4); margin-bottom: 36px; }
+  .section-label { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 16px; }
+  .card { display: flex; align-items: center; gap: 16px; padding: 14px 16px; border-radius: 6px; text-decoration: none; color: #fff; transition: background 0.15s; margin-bottom: 4px; }
+  .card:hover { background: rgba(255,255,255,0.06); }
+  .card-icon { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .card-icon svg { width: 22px; height: 22px; fill: #fff; }
+  .card-icon.blue { background: #3b82f6; }
+  .card-icon.amber { background: #f59e0b; }
+  .card-icon.green { background: #22c55e; }
+  .card-icon.purple { background: #a855f7; }
+  .card-icon.red { background: #ef4444; }
+  .card-icon.teal { background: #14b8a6; }
+  .card-body h5 { font-size: 15px; font-weight: 500; margin-bottom: 2px; }
+  .card-body span { font-size: 12px; color: rgba(255,255,255,0.45); }
+  .footer { text-align: center; font-size: 11px; color: rgba(255,255,255,0.25); margin-top: 48px; padding-bottom: 24px; }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <h1>内部看板</h1>
-  <p>排产·告警·成本·采购 — 自动展示最新</p>
-</div>
-
 <div class="container">
-  <div class="section">
-    <div class="section-title">看板</div>
-    <a class="card" href="https://imthefirstuser.github.io/sedn-dashboard/index.html" target="_blank">
-      <div class="card-left">
-        <span class="card-icon">🖥️</span>
-        <div>
-          <div class="card-name">内部功能平台</div>
-          <div class="card-desc">排产看板·全线告警·成本报表·采购报表</div>
-        </div>
-      </div>
-      <span class="card-arrow">›</span>
-    </a>
-    <a class="card" href="https://imthefirstuser.github.io/sedn-dashboard/schedule/" target="_blank">
-      <div class="card-left">
-        <span class="card-icon">📅</span>
-        <div>
-          <div class="card-name">排产看板</div>
-          <div class="card-desc">生产排产进度</div>
-        </div>
-      </div>
-      <span class="card-arrow">›</span>
-    </a>
-    <a class="card" href="https://imthefirstuser.github.io/sedn-dashboard/alert/" target="_blank">
-      <div class="card-left">
-        <span class="card-icon">⚠️</span>
-        <div>
-          <div class="card-name">全线告警</div>
-          <div class="card-desc">生产异常告警</div>
-        </div>
-      </div>
-      <span class="card-arrow">›</span>
-    </a>
-    <a class="card" href="https://imthefirstuser.github.io/sedn-dashboard/cost_report.html" target="_blank">
-      <div class="card-left">
-        <span class="card-icon">💰</span>
-        <div>
-          <div class="card-name">成本报表</div>
-          <div class="card-desc">725品号汇总统计表</div>
-        </div>
-      </div>
-      <span class="card-arrow">›</span>
-    </a>
-  </div>
+  <a class="back" href="/">
+    <svg viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
+    返回
+  </a>
+  <div class="title">内部看板</div>
+  <div class="subtitle">排产 · 告警 · 成本 · 采购 — 自动展示最新</div>
 
-  <div class="section">
-    <div class="section-title">采购</div>
-    <a class="card" href="https://imthefirstuser.github.io/sedn-dashboard/purchase_2b.html" target="_blank">
-      <div class="card-left">
-        <span class="card-icon">📋</span>
-        <div>
-          <div class="card-name">304#2B 采购明细看板</div>
-          <div class="card-desc">304#2B 板材采购明细·价格·供应商对比</div>
-        </div>
-      </div>
-      <span class="card-arrow">›</span>
-    </a>
-  </div>
+  <div class="section-label">看板</div>
+
+  <a class="card" href="https://imthefirstuser.github.io/sedn-dashboard/index.html" target="_blank">
+    <div class="card-icon blue">
+      <svg viewBox="0 0 24 24"><path d="M4,6H20V8H4V6M4,11H20V13H4V11M4,16H20V18H4V16Z"/></svg>
+    </div>
+    <div class="card-body">
+      <h5>内部功能平台</h5>
+      <span>排产看板 · 全线告警 · 成本报表 · 采购报表</span>
+    </div>
+  </a>
+
+  <a class="card" href="https://imthefirstuser.github.io/sedn-dashboard/schedule/" target="_blank">
+    <div class="card-icon purple">
+      <svg viewBox="0 0 24 24"><path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M19,19H5V8H19V19M7,10H12V15H7V10Z"/></svg>
+    </div>
+    <div class="card-body">
+      <h5>排产看板</h5>
+      <span>生产排产进度</span>
+    </div>
+  </a>
+
+  <a class="card" href="https://imthefirstuser.github.io/sedn-dashboard/alert/" target="_blank">
+    <div class="card-icon red">
+      <svg viewBox="0 0 24 24"><path d="M13,14H11V10H13M13,20H11V16H13M1,21H23L12,2L1,21Z"/></svg>
+    </div>
+    <div class="card-body">
+      <h5>全线告警</h5>
+      <span>生产异常告警</span>
+    </div>
+  </a>
+
+  <a class="card" href="https://imthefirstuser.github.io/sedn-dashboard/cost_report.html" target="_blank">
+    <div class="card-icon green">
+      <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 1,0 22,12A10,10 0 0,0 12,2M12,20A8,8 0 1,1 20,12A8,8 0 0,1 12,20M12.5,7H11V13L16.2,16.2L17,14.9L12.5,12.2V7Z"/></svg>
+    </div>
+    <div class="card-body">
+      <h5>成本报表</h5>
+      <span>725品号汇总统计表</span>
+    </div>
+  </a>
+
+  <div class="section-label">采购</div>
+
+  <a class="card" href="https://imthefirstuser.github.io/sedn-dashboard/purchase_2b.html" target="_blank">
+    <div class="card-icon teal">
+      <svg viewBox="0 0 24 24"><path d="M19,21.5H5C4.2,21.5 3.5,20.8 3.5,20V5.5C3.5,4.7 4.2,4 5,4H19C19.8,4 20.5,4.7 20.5,5.5V20C20.5,20.8 19.8,21.5 19,21.5M5,5.5V20H19V5.5H5M6,6H18V8H6V6M6,9H18V11H6V9M6,12H18V14H6V12M6,15H13V17H6V15Z"/></svg>
+    </div>
+    <div class="card-body">
+      <h5>304#2B 采购明细看板</h5>
+      <span>304#2B 板材采购明细 · 价格 · 供应商对比</span>
+    </div>
+  </a>
 
   <div class="footer">身份已验证 · 7天内免登录</div>
 </div>
