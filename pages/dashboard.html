@@ -6,27 +6,30 @@
 <title>内部看板</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #242b33; color: #fff; min-height: 100vh; }
-  .container { max-width: 680px; margin: 0 auto; padding: 40px 24px; }
-  .back { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: rgba(255,255,255,0.4); text-decoration: none; margin-bottom: 24px; }
-  .back:hover { color: rgba(255,255,255,0.7); }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Noto Sans SC", sans-serif; background: #fafafa; color: #1a1a1a; min-height: 100vh; }
+  .container { max-width: 680px; margin: 0 auto; padding: 48px 24px; }
+  .back { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: #999; text-decoration: none; margin-bottom: 20px; }
+  .back:hover { color: #333; }
   .back svg { width: 16px; height: 16px; fill: currentColor; }
-  .title { font-size: 24px; font-weight: 300; margin-bottom: 4px; }
-  .subtitle { font-size: 13px; color: rgba(255,255,255,0.4); margin-bottom: 36px; }
-  .section-label { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 16px; }
-  .card { display: flex; align-items: center; gap: 16px; padding: 14px 16px; border-radius: 6px; text-decoration: none; color: #fff; transition: background 0.15s; margin-bottom: 4px; }
-  .card:hover { background: rgba(255,255,255,0.06); }
-  .card-icon { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .card-icon svg { width: 22px; height: 22px; fill: #fff; }
-  .card-icon.blue { background: #3b82f6; }
-  .card-icon.amber { background: #f59e0b; }
-  .card-icon.green { background: #22c55e; }
-  .card-icon.purple { background: #a855f7; }
-  .card-icon.red { background: #ef4444; }
-  .card-icon.teal { background: #14b8a6; }
+  .title { font-size: 24px; font-weight: 300; letter-spacing: -0.5px; }
+  .section-label { font-size: 11px; font-weight: 600; color: #bbb; text-transform: uppercase; letter-spacing: 1.5px; margin: 32px 0 16px; }
+  .card { display: flex; align-items: center; gap: 16px; padding: 16px; border-radius: 10px; text-decoration: none; color: #1a1a1a; transition: background 0.15s; margin-bottom: 6px; background: #fff; border: 1px solid #eee; }
+  .card:hover { background: #f0f0f0; border-color: #ddd; }
+  .card-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .card-icon svg { width: 20px; height: 20px; }
+  .card-icon.blue { background: #eff6ff; }
+  .card-icon.blue svg { fill: #3b82f6; }
+  .card-icon.purple { background: #faf5ff; }
+  .card-icon.purple svg { fill: #a855f7; }
+  .card-icon.red { background: #fef2f2; }
+  .card-icon.red svg { fill: #ef4444; }
+  .card-icon.green { background: #f0fdf4; }
+  .card-icon.green svg { fill: #22c55e; }
+  .card-icon.teal { background: #f0fdfa; }
+  .card-icon.teal svg { fill: #14b8a6; }
   .card-body h5 { font-size: 15px; font-weight: 500; margin-bottom: 2px; }
-  .card-body span { font-size: 12px; color: rgba(255,255,255,0.45); }
-  .footer { text-align: center; font-size: 11px; color: rgba(255,255,255,0.25); margin-top: 48px; padding-bottom: 24px; }
+  .card-body span { font-size: 12px; color: #999; }
+  .footer { text-align: center; font-size: 11px; color: #ccc; margin-top: 56px; padding-bottom: 24px; }
 </style>
 </head>
 <body>
