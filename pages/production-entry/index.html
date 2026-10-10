@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>演示版 · 生产日报填报</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; font:14px/1.5 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif;
+         background:#eef1f5; color:#1c2430; }
+  header { background:#1f4e79; color:#fff; padding:9px 16px; display:flex; align-items:center;
+           gap:14px; }
+  header h1 { font-size:16px; margin:0; font-weight:600; }
+  header a { color:#cfe2f5; font-size:12px; text-decoration:none; border:1px solid #4a7cb0;
+             padding:3px 9px; border-radius:4px; }
+  header .sp { flex:1; }
+  .toolbar { position:sticky; top:0; z-index:20; background:#fff; border-bottom:1px solid #c8d2dd;
+             padding:8px 16px; display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap;
+             box-shadow:0 1px 3px rgba(0,0,0,.06); }
+  label { font-size:11px; color:#5b6b7c; display:block; margin-bottom:3px; }
+  input, select { padding:6px 8px; border:1px solid #c8d2dd; border-radius:4px; font:14px inherit;
+                  background:#fff; }
+  input:focus, select:focus { outline:2px solid #2a6ba8; outline-offset:-1px; }
+  input[type=number] { text-align:right; font-variant-numeric:tabular-nums; }
+  .grow { flex:1; min-width:160px; }
+  button { cursor:pointer; border:0; border-radius:4px; font:14px inherit; padding:8px 16px; }
+  .save { background:#1f4e79; color:#fff; font-weight:600; }
+  .save:hover { background:#2a6ba8; }
+  .save.dirty { background:#c77700; }
+  .save:disabled { background:#b9c6d4; cursor:not-allowed; }
+  .ghost { background:#eef2f6; color:#3d4c5c; }
+  .sum { font-size:12px; color:#3d4c5c; background:#f4f7fa; border:1px solid #dde3ea;
+         border-radius:4px; padding:6px 10px; line-height:1.7; }
+  .sum b { color:#1f4e79; }
+  main { padding:12px 16px 60px; }
+  .wrap { background:#fff; border:1px solid #c8d2dd; border-radius:6px; overflow:auto;
+          max-height:calc(100vh - 210px); }
+  table { width:100%; border-collapse:separate; border-spacing:0; font-size:13px; }
+  thead th { position:sticky; top:0; z-index:10; background:#dce6f1; color:#1f4e79;
+             font-weight:600; font-size:12px; text-align:left; padding:8px 8px;
+             border-bottom:2px solid #a8bcd0; white-space:nowrap; }
+  tbody td { padding:3px 8px; border-bottom:1px solid #edf1f6; white-space:nowrap; }
+  tbody tr:hover { background:#f6faff; }
+  tr.done td { background:#f7f9fb; color:#93a1b0; }
+  tr.done:hover td { background:#eef4f9; }
+  tr.filled td { background:#eefaf1; }
+  table:not(.multi) tr.overdue td:nth-child(13) { color:#c0392b; font-weight:600; }
+  /* 交期列：匹配型没有「工序/工艺」列 → 第 13 列；一页多填多一列 → 第 14 列（别写成同一个数，
+     也别写不排除 multi 的裸选择器：裸 nth-child(13) 在一页多填下会点到「备注」） */
+  td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; }
+  .sortable { cursor:pointer; user-select:none; }
+  .sortable:hover { color:#2a6fb0; }
+  .sortable.on { color:#1a63a8; }
+  .sortable i { font-style:normal; font-size:11px; opacity:.6; }
+  .sortable.on i { opacity:1; }
+  .ono { font-family:Consolas,monospace; font-size:12px; color:#1f4e79; }
+  .bar { display:inline-block; height:6px; border-radius:3px; background:#dfe6ee; width:60px;
+         vertical-align:middle; margin-right:5px; }
+  .bar > i { display:block; height:6px; border-radius:3px; background:#2a9d5c; }
+  td input { width:100%; border:1px solid transparent; background:transparent; padding:4px 6px; }
+  td input:hover { border-color:#dbe3ec; background:#fff; }
+  td input:focus { border-color:#2a6ba8; background:#fff; }
+  td.c-ok input { width:74px; font-weight:600; color:#1e7d43; text-align:right; }
+  td.c-ng input { width:62px; text-align:right; }
+  td.c-rm input { width:150px; }
+  tr.dirty td input { background:#fffbe8; border-color:#e8c979; }
+  .tag { font-size:11px; padding:1px 6px; border-radius:9px; background:#eef2f6; color:#5b6b7c; }
+  .tag.m3 { background:#e6f4ea; color:#1e7d43; }
+  .tag.hand { background:#e7effa; color:#1f4e79; }
+  .tag.new { background:#fdf0d5; color:#8a6100; }
+  .tag.parsed { background:#e6f2f0; color:#1f6f63; }
+  .tag.base { background:#eef0f4; color:#5a6572; }        /* 进度表：历史已完成（只读事实） */
+  .whole { color:#8a929b; font-size:11px; line-height:1.25; }
+  .whole i { color:#aab2ba; font-style:normal; }
+  .prev { color:#8a97a6; font-style:normal; font-size:11px; margin-left:3px; }
+  tr.wo td { background:#f7f9fb; color:#8a97a6; }
+  /* 「满」小按钮：把还差整个填进今日完成 */
+  button.fill { margin-left:5px; padding:0 6px; font-size:11px; line-height:17px; cursor:pointer;
+                border:1px solid #d8c08a; border-radius:8px; background:#fff8e6; color:#8a6100; }
+  button.fill:hover { background:#ffeec2; }
+  td.wo { text-align:center; }
+  .wo-note { font-size:11px; color:#a8b2bb; }
+  .toast { position:fixed; right:18px; bottom:18px; padding:12px 18px; border-radius:6px;
+           color:#fff; font-size:14px; box-shadow:0 4px 14px rgba(0,0,0,.2); display:none;
+           max-width:520px; white-space:pre-line; z-index:99; }
+  .toast.ok { background:#1e7d43; display:block; }
+  .toast.err { background:#c0392b; display:block; }
+  .empty { color:#9aa7b4; padding:26px; text-align:center; }
+  .hint { color:#8a97a6; font-size:12px; }
+  /* 工艺：可搜索 + 可新增的下拉（原生 select 没法打字搜，也没法新增） */
+  .cb { position:relative; display:inline-block; }
+  .cb input { width:190px; padding-right:22px; }
+  .cb .caret { position:absolute; right:7px; top:50%; transform:translateY(-50%);
+               color:#8296a8; pointer-events:none; font-size:11px; }
+  .cblist { display:none; position:absolute; left:0; top:calc(100% + 3px); width:260px; max-height:300px;
+            overflow:auto; background:#fff; border:1px solid #c9d6e2; border-radius:5px;
+            box-shadow:0 8px 22px rgba(18,40,66,.16); z-index:60; padding:3px 0; }
+  .cblist.show { display:block; }
+  .cblist .opt { padding:6px 11px; font-size:13px; cursor:pointer; white-space:nowrap;
+                 overflow:hidden; text-overflow:ellipsis; }
+  .cblist .opt:hover, .cblist .opt.on { background:#e8f1fb; }
+  .cblist .opt.none { color:#8a97a6; border-bottom:1px solid #eef2f6; }
+  .cblist .opt.add { color:#1f4e79; background:#f2f8ff; border-top:1px solid #e2ecf6; font-weight:600; }
+  .cblist .sep { padding:4px 11px; font-size:11px; color:#9aa7b4; }
+  /* 一页多填：行内自带「工序 / 工艺」两列（上下排，列不宽） */
+  th.pp-col, td.c-pp { display:none; }
+  table.multi th.pp-col, table.multi td.c-pp { display:table-cell; }
+  /* ⚠️ 两个下拉必须**上下排**：全局 `tbody td{white-space:nowrap}` 会让两个 inline-block 的
+     select 不肯换行 → 各占满一格宽、并排溢出到隔壁列（表格看着全歪）。这里放开换行 + block。 */
+  td.c-pp { white-space:normal; }
+  td.c-pp select { display:block; width:100%; padding:1px 4px; font-size:12px; line-height:1.3;
+                   border-color:#c8d2dd; background:#fbfdff; text-overflow:ellipsis; }
+  td.c-pp select + select { margin-top:2px; }
+  table.multi tr.overdue td:nth-child(14) { color:#c0392b; font-weight:600; }
+  table.multi td.c-rm input { width:118px; }
+  /* ── 「表标签」（表头/列内小标签）对齐 ───────────────────────────────────
+     数字列一律右对齐：表头（th.num）与格子（td.num）+ 格子里的输入框都靠右，
+     不然标签在右边、输入框在左边，一屏看下来整列是歪的。
+     列内的小标签（×N、本月+上月、满）统一贴右/贴左边缘，不把数字挤得七扭八歪。 */
+  thead th { vertical-align:middle; }
+  tbody td { vertical-align:middle; }
+  th:first-child, td:first-child { text-align:right; }        /* 「#」列：表头跟序号都靠右 */
+  td.c-rq, td.c-ok, td.c-ng { text-align:right; }             /* 需求数/今日完成/不良：输入框贴右 */
+  td.c-rq input { width:62px; text-align:right; font-weight:600; color:#1f4e79; }
+  td.c-rq .xf { font-size:10px; color:#8a6100; background:#fff8e6; border-radius:7px;
+                padding:0 4px; margin-right:4px; }            /* 角标挪到输入框**前面**，数字右边缘才对齐 */
+  td.js-cum .prev { display:block; text-align:right; }         /* 「本月 X+上月 Y」换行贴右，数字不被顶走 */
+  /* 「还差 N [满]」用 inline-flex 挤成一行、整体贴右 → 每行数字右边缘齐平（float 会顶成两行） */
+  td.js-left .lr { display:inline-flex; align-items:center; gap:5px; }
+  td.js-left { white-space:nowrap; }
+  #thleft { padding-right:40px; }   /* 表头「还差」右缩进 = 满按钮的宽度，标签正对着数字 */
+</style>
+</head>
+<body>
+<header>
+  <h1>📝 生产日报填报</h1>
+  <span class="hint" style="color:#a8c4e0" id="dbinfo"></span>
+  <span class="sp"></span>
+  <a href="http://localhost:8775/" target="_blank">生产进度表 →</a>
+</header>
+
+<div class="toolbar">
+  <div><label>生产日期</label><input type="date" id="d"></div>
+  <div><label>填报模式</label>
+    <select id="mode" title="匹配型：整屏按上面选的工序+工艺填（跟以前一样）。一页多填：每行自带工序/工艺，一屏能把几道工序一起填">
+      <option value="match">匹配型（按工序+工艺）</option>
+      <option value="multi">一页多填（行内选工序）</option>
+    </select>
+  </div>
+  <div><label id="lp">工序</label><select id="p" style="min-width:130px"></select></div>
+  <div><label id="lc">工艺</label>
+    <div class="cb">
+      <input id="cf" autocomplete="off" placeholder="点开选 / 打字搜 / 回车新增">
+      <span class="caret">▾</span>
+      <div class="cblist" id="cflist"></div>
+    </div>
+  </div>
+  <div><label>填报人</label><input id="op" placeholder="姓名" style="width:96px"></div>
+  <div><label>每屏</label>
+    <select id="n">
+      <option value="100">100 行</option>
+      <option value="200">200 行</option>
+      <option value="400">400 行</option>
+      <option value="1000">1000 行</option>
+      <option value="2000">全部</option>
+    </select>
+  </div>
+  <div class="grow"><label>搜订单号 / 型号</label><input class="grow" id="q" placeholder="如 S26-07-09 或 SB1853"></div>
+  <div><label>范围</label>
+    <select id="scope">
+      <option value="left">只看还没做完</option>
+      <option value="all">全部</option>
+    </select>
+  </div>
+  <div><label>&nbsp;</label><button class="ghost" id="reload">刷新</button></div>
+  <div><label>&nbsp;</label><button class="save" id="save" disabled>保存改动</button></div>
+  <div class="sum" id="sum">—</div>
+</div>
+
+<main>
+  <div class="wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:32px">#</th>
+          <th style="width:186px"><span id="sortono" class="sortable" title="点一下按订单号升序，再点降序，第三次取消；两列可以一起用，先点的当主键">订单号 <i id="sortico">↕</i></span></th>
+          <th style="width:96px"><span id="sortmdl" class="sortable" title="点一下按型号升序，再点降序，第三次取消；两列可以一起用，先点的当主键">型号 <i id="sortmdlico">↕</i></span></th>
+          <th style="width:62px">表面</th>
+          <th id="thpp" class="pp-col" style="width:128px">工序 / 工艺<br><i style="font-weight:400;color:#8a97a6;font-size:11px">行内可改</i></th>
+          <th class="num" style="width:60px">订单数</th>
+          <th class="num" style="width:96px"><span title="默认 = 订单数。有些工序/工艺要按倍数做（×2、×4…），直接改这一格；保存后记住，下次同「工序+工艺+订单」自动带出来。还差 = 需求数 − 已报，不再拿订单数封顶。">需求数<br><i style="font-style:normal;font-size:10px;color:#8a6100">可改</i></span></th>
+          <th class="num" style="width:54px">已报</th>
+          <th id="thleft" class="num" style="width:88px">还差</th>
+          <th style="width:84px"><span id="sortprog" class="sortable" title="点一下按进度升序（做得少的在前），再点降序（做得多的在前），第三次取消；可以跟订单号/型号一起用，先点的当主键。进度 = 已报 ÷ 需求数">进度 <i id="sortprogico">↕</i></span></th>
+          <th class="num" style="width:82px">今日完成</th>
+          <th class="num" style="width:58px">不良</th>
+          <th style="width:104px">备注</th>
+          <th style="width:84px">交期</th>
+          <th style="width:48px">来源</th>
+        </tr>
+      </thead>
+      <tbody id="tb"><tr><td colspan="15" class="empty">读数据中…</td></tr></tbody>
+    </table>
+  </div>
+  <div class="hint" id="footnote" style="margin-top:8px"></div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>window.__DEMO_DATE="2026-10-10";</script>
+<script>
+/* 静态演示版 shim —— 由 build_static_demo.py 注入到 demo/index.html（要改就改这里再重新生成）。
+   /api/meta          → data/meta.json（快照时抓的）
+   /api/sheet         → data/<工序>.json（整表快照，limit 拉到 2000）+ 本地筛选/排序
+                        口径照抄 server.py：scope / q / craft（crmap）/ parse_sort / 截断规则 / summary
+   /api/submit_batch  → 只读，直接回错误（演示版不能写）
+*/
+(function () {
+  const origFetch = window.fetch.bind(window);
+  const cache = {};
+  const json = (o, st) => new Response(JSON.stringify(o), { status: st || 200, headers: { 'Content-Type': 'application/json; charset=utf-8' } });
+  function qs(u) {
+    const o = {};
+    (u.split('?')[1] || '').split('&').forEach(kv => {
+      if (!kv) return;
+      const i = kv.indexOf('=');
+      o[decodeURIComponent(kv.slice(0, i))] = decodeURIComponent(kv.slice(i + 1) || '');
+    });
+    return o;
+  }
+  async function snap(p) {
+    if (!cache[p]) {
+      const m = cache.__meta || (cache.__meta = await (await origFetch('data/meta.json')).json());
+      const f = (m.files || {})[p] || ('data/' + encodeURIComponent(p) + '.json');
+      cache[p] = await (await origFetch(f)).json();
+    }
+    return cache[p];
+  }
+
+  /* 编码自然序（同 server.code_sort_key）：数字段按数值比 —— S26-9-2 在 S26-9-10 前、TP0049 在 TP3000 前 */
+  function codeKey(s) {
+    const out = [];
+    (String(s == null ? '' : s).match(/\d+|\D+/g) || []).forEach(p => { out.push(/^\d+$/.test(p) ? [0, parseInt(p, 10)] : [1, p]); });
+    return out;
+  }
+  function cmpKey(a, b) {
+    const n = Math.min(a.length, b.length);
+    for (let i = 0; i < n; i++) {
+      if (a[i][0] !== b[i][0]) return a[i][0] - b[i][0];
+      const v1 = a[i][1], v2 = b[i][1];
+      if (v1 !== v2) return v1 < v2 ? -1 : 1;
+    }
+    return a.length - b.length;
+  }
+  function parseSort(s) {                       // 同 server.parse_sort
+    const keys = [];
+    (s || '').split(',').forEach(part => {
+      part = part.trim();
+      if (!part) return;
+      if (['order', 'order_desc', 'model', 'model_desc'].indexOf(part) >= 0) {
+        keys.push([part.indexOf('_desc') >= 0 ? part.slice(0, -5) : part, part.indexOf('_desc') >= 0]);
+      } else if (part.indexOf(':') >= 0) {
+        const a = part.split(':');
+        if (['order', 'model', 'prog'].indexOf(a[0]) >= 0) keys.push([a[0], /^desc/.test((a[1] || '').trim().toLowerCase())]);
+      }
+    });
+    return keys.slice(0, 3);
+  }
+  const progOf = r => (r.req > 0 ? (r.done_qty || 0) / r.req : null);   // 进度 = 已报 ÷ 需求数（不封顶）
+  function sortRows(rows, sort) {               // 同 server.sort_rows（几列一起用，先点的当主键）
+    let keys = parseSort(sort);
+    if (keys.length === 1) keys.push([keys[0][0] === 'order' ? 'model' : 'order', false]);
+    if (keys.length) {
+      keys = keys.concat([['surface', false]]);
+      for (let i = keys.length - 1; i >= 0; i--) {
+        const col = keys[i][0], desc = keys[i][1];
+        if (col === 'prog') {
+          const have = rows.filter(r => progOf(r) !== null), none = rows.filter(r => progOf(r) === null);
+          have.sort((a, b) => (desc ? progOf(b) - progOf(a) : progOf(a) - progOf(b)));
+          rows.length = 0;
+          have.concat(none).forEach(r => rows.push(r));
+        } else {
+          const f = r => codeKey(col === 'model' ? r.model : (col === 'surface' ? r.surface : r.order_no));
+          rows.sort((a, b) => { const c = cmpKey(f(a), f(b)); return desc ? -c : c; });
+        }
+      }
+    } else {                                    // 没选列 → 服务端默认：还差多的在前
+      rows.sort((a, b) => {
+        const la = a.order_qty ? -a.left : 1, lb = b.order_qty ? -b.left : 1;
+        if (la !== lb) return la - lb;
+        if (a.order_no !== b.order_no) return a.order_no < b.order_no ? -1 : 1;
+        return a.surface === b.surface ? 0 : (a.surface < b.surface ? -1 : 1);
+      });
+    }
+  }
+
+  async function sheet(pm) {
+    const p = pm.process, craft = pm.craft || '', multi = !!pm.multi;
+    const scope = multi ? 'all' : (pm.scope || 'left');
+    const q = (pm.q || '').trim().toLowerCase();
+    const limit = Math.min(parseInt(pm.limit || '200', 10) || 200, 2000);
+    const s0 = await snap(p);
+    const rows = [];
+    let skippedBase = 0, skippedDone = 0, extrasFill = 0, extrasRef = 0;
+    (s0.rows || []).forEach(src => {
+      if (q && !((src.order_no || '').toLowerCase().indexOf(q) >= 0
+              || (src.model || '').toLowerCase().indexOf(q) >= 0
+              || (src.surface || '').toLowerCase().indexOf(q) >= 0)) return;
+      const r = Object.assign({}, src);
+      if (craft) {                              // 顶部选了工艺 → 用 crmap 就地换这一行的数（道理同 server.py 的 craft 分支）
+        const c = (r.crmap || {})[craft];
+        r.craft = craft;
+        r.cum = c ? (c.cum || 0) : 0;
+        r.prev = c ? (c.prev || 0) : 0;
+        const rm = ((r.reqmap || {})[p] || {})[craft];
+        r.req = (rm != null && rm !== '') ? Number(rm) : (r.order_qty || 0);
+        r.left = r.base_done ? 0 : Math.max(r.req - r.cum - r.prev, 0);
+        r.done_qty = r.base_done ? r.req : r.cum + r.prev;
+      }
+      if (scope === 'left' && r.req && r.left === 0) {
+        if (r.base_done) skippedBase++; else skippedDone++;
+        return;
+      }
+      if (r.ref) extrasRef++; else if (r.kind) extrasFill++;
+      rows.push(r);
+    });
+    sortRows(rows, pm.sort);                    // 排序在截断之前
+    const matched = rows.length;
+    const kept = rows.filter(r => !r.whole && !r.ref).slice(0, limit).concat(rows.filter(r => r.whole || r.ref));
+    sortRows(kept, pm.sort);                    // 截断后再排一次（参考行是追加的）
+    const fillable = kept.filter(r => !r.whole && !r.ref);
+    return {
+      work_date: pm.date || s0.date, process: p, craft: craft, scope: scope, multi: multi,
+      crafts: s0.crafts || [], rows: kept, shown: kept.length, matched: matched,
+      summary: {
+        orders: fillable.length,
+        done: fillable.filter(r => r.req && r.left === 0).length,
+        today_qty: kept.reduce((s, r) => s + (((r.today || {}).qty_ok) || 0), 0),
+        left_qty: fillable.reduce((s, r) => s + (r.left || 0), 0),
+        whole_rows: kept.filter(r => r.whole).length,
+        extras_fillable: extrasFill, extras_ref: extrasRef,
+        skipped_base: skippedBase, skipped_done: skippedDone,
+      },
+    };
+  }
+
+  window.fetch = async function (input, init) {
+    const url = (typeof input === 'string') ? input : ((input && input.url) || '');
+    const path = url.split('?')[0];
+    if (path === '/api/meta') return json(Object.assign(await (await origFetch('data/meta.json')).json(), {}));
+    if (path === '/api/sheet') return json(await sheet(qs(url)));
+    if (path === '/api/submit_batch' || path === '/api/submit') return json({ error: '演示版（静态快照）只读，不能保存' }, 403);
+    return origFetch(input, init);
+  };
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const b = document.createElement('div');
+    b.textContent = '演示版 · 静态快照（只读）　数据：' + (window.__DEMO_DATE || '') + ' 日均日报 / 在产清单　保存与导出不可用';
+    b.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:9999;background:#1f4e79;color:#fff;'
+      + 'font:12px/1.7 -apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans SC",sans-serif;padding:3px 12px;text-align:center';
+    document.body.appendChild(b);
+    document.body.style.paddingBottom = '28px';
+  });
+})();
+
+</script>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => (s==null?'':String(s)).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const TODAY = new Date().toISOString().slice(0,10);
+let ROWS = [], DIRTY = new Map(), TIMER = null, DB = '', CRAFTS = {};
+let MODE = 'match', NPROC = [], LAST = null, QUIET = false;    // 填报模式：match=匹配型 / multi=一页多填
+let SKEYS = [];                                  // [['order','asc'],['model','desc']] 顺序 = 优先级（先点的当主键）
+try { SKEYS = JSON.parse(localStorage.getItem('sortkeys') || '[]') || []; } catch(e) { SKEYS = []; }
+localStorage.removeItem('sort');                 // 老版本的单列排序键，作废
+
+// 三个表头可以一起点亮的排序：点一下升序、再点降序、第三次取消。
+// 点第一列 = 主键，再点第二列 = 次键（先点的当主键，跟着点击顺序走）。
+// 「进度」列的升序 = 做得少的在前（统计员最常用）。
+function applySortState(){
+  const st = col => {
+    const k = SKEYS.find(x => x[0] === col);
+    return {t: k ? (k[1] === 'desc' ? '↓' : '↑') : '↕', on: !!k};
+  };
+  const o = st('order'), m = st('model'), g = st('prog');
+  $('#sortico').textContent = o.t;    $('#sortono').classList.toggle('on', o.on);
+  $('#sortmdlico').textContent = m.t; $('#sortmdl').classList.toggle('on', m.on);
+  $('#sortprogico').textContent = g.t; $('#sortprog').classList.toggle('on', g.on);
+}
+function cycleSort(col){
+  const i = SKEYS.findIndex(x => x[0] === col);
+  if (i < 0) SKEYS.push([col, 'asc']);                 // 没亮 → 亮起来（排在最后 = 优先级最低）
+  else if (SKEYS[i][1] === 'asc') SKEYS[i][1] = 'desc';
+  else SKEYS.splice(i, 1);
+  localStorage.setItem('sortkeys', JSON.stringify(SKEYS));
+  applySortState();
+  load();
+}
+const sortParam = () => SKEYS.map(([c, d]) => `${c}:${d}`).join(',');
+function sortLabel(){                            // 页脚显示：订单号 ↑ → 型号 ↓ → 进度 ↑（前面的是主键）
+  const nm = c => c === 'order' ? '订单号' : (c === 'model' ? '型号' : '进度');
+  return SKEYS.map(([c, d]) => nm(c) + (d === 'desc' ? ' ↓' : ' ↑')).join(' → ');
+}
+
+function toast(msg, ok=true){
+  const t=$('#toast'); t.textContent=msg; t.className='toast '+(ok?'ok':'err');
+  clearTimeout(t._h); t._h=setTimeout(()=>t.className='toast', ok?2400:7000);
+}
+const key = r => r.order_no + '|' + r.model + '|' + (r.surface || '');
+
+async function boot(){
+  const m = await (await fetch('/api/meta')).json();
+  $('#d').value = m.today;
+  NPROC = m.processes.slice();
+  $('#p').innerHTML = m.processes.map((p,i)=>`<option${i?'':' selected'}>${esc(p)}</option>`).join('');
+  CRAFTS = m.crafts || {};
+  fillCrafts();
+  MODE = localStorage.getItem('mode2') || 'match';
+  $('#mode').value = MODE;
+  $('#mode').onchange = e => { MODE = e.target.value; localStorage.setItem('mode2', MODE); applyMode(); };
+  $('#op').value = localStorage.getItem('op') || '';
+  $('#n').value = localStorage.getItem('n') || '200';
+  SORT = localStorage.getItem('sort') || '';
+  applySortState();
+  $('#sortono').onclick = () => cycleSort('order');
+  $('#sortmdl').onclick = () => cycleSort('model');
+  $('#sortprog').onclick = () => cycleSort('prog');
+  $('#n').onchange = e => { localStorage.setItem('n', e.target.value); load(); };
+  $('#dbinfo').textContent = `订单清单 ${m.orders_total} 条 · M3 基线 ${m.m3_total} 条 · 已填 ${m.reports_total} 条`;
+  DB = m.db;
+  $('#footnote').textContent = `库：${DB}`;
+  $('#op').onchange = e => localStorage.setItem('op', e.target.value);
+  $('#p').onchange = () => { fillCrafts(); load(); };
+  cbWire();
+  applyMode();          // 里面会 load()
+}
+
+// 两种填报模式（用户 2026-10-10 要的）：顶层下拉切换，记在 localStorage
+//   匹配型 match：整屏一个「工序 + 工艺」，只列出该工序还没做完的行（老用法）
+//   一页多填 multi：每行自带「工序 + 工艺」（上下两行摆在一列里），一屏能把几道工序一起填；
+//                  不按工序筛行（一行可能填的是别的工序），所以范围强制「全部」
+function applyMode(){
+  const multi = MODE === 'multi';
+  $('#lp').textContent = multi ? '默认工序' : '工序';
+  $('#lc').textContent = multi ? '默认工艺' : '工艺';
+  const tip = '新行默认用这道工序/工艺，每行还能自己改';
+  $('#lp').title = multi ? tip : '';
+  $('#lc').title = multi ? tip : '';
+  $('#p').title = multi ? '新行默认工序（行内可改）' : '';
+  $('#scope').disabled = multi;
+  $('#scope').title = multi ? '一页多填：一行可能填别的工序，所以不筛，全部列出来' : '';
+  const tbl = document.querySelector('main table');
+  if(tbl) tbl.classList.toggle('multi', multi);
+  load();
+}
+
+// ── 工艺：可搜索 + 可手工新增的下拉 ──────────────────────────────────────
+// 原生 <select> 既不能打字搜，也不能新增，所以自己做一个：点开列全部，
+// 打字按子串过滤，回车 = 命中就选、没命中就当新工艺存（服务端只提示不拦）。
+let CF = '';                                  // 当前选中的工艺，'' = 无工艺
+const cfList = () => CRAFTS[$('#p').value] || [];
+
+function fillCrafts(){                        // 工序换了 → 工艺归零
+  CF = '';
+  $('#cf').value = '';
+  closeCb();
+}
+
+function cbOpen(){
+  const q = $('#cf').value.trim(), list = cfList(), il = $('#cflist');
+  const hits = q ? list.filter(c => c.indexOf(q) >= 0) : list;
+  let h = '<div class="opt none" data-v="">（无工艺）</div>';
+  h += hits.map(c => `<div class="opt${c === CF ? ' on' : ''}" data-v="${esc(c)}" title="${esc(c)}">${esc(c)}</div>`).join('');
+  if(q && list.indexOf(q) < 0) h += `<div class="opt add" data-v="${esc(q)}">＋ 新增「${esc(q)}」</div>`;
+  if(!list.length) h += '<div class="sep">这个工序没有工艺清单 —— 直接打字，回车就是新增</div>';
+  else if(q && !hits.length) h += '<div class="sep">没搜到，按下面的「新增」或直接回车建新的</div>';
+  il.innerHTML = h;
+  il.classList.add('show');
+  il.querySelectorAll('[data-v]').forEach(el => {
+    el.onmousedown = e => { e.preventDefault(); pickCraft(el.dataset.v); };
+  });
+}
+function closeCb(){ $('#cflist').classList.remove('show'); }
+
+function rememberCraft(v){           // 新工艺本地记住，本次会话下拉里就能再搜到
+  if(!v) return;
+  const p = $('#p').value;
+  const list = CRAFTS[p] = CRAFTS[p] || [];
+  if(list.indexOf(v) < 0) list.push(v);
+}
+
+function pickCraft(v){
+  CF = v || '';
+  $('#cf').value = CF;
+  rememberCraft(CF);
+  closeCb();
+  load();
+}
+
+// 框里打的字跟选中值不一致 = 要新增；一致 = 用选中的
+function cbCurrent(){
+  const t = $('#cf').value.trim();
+  return t === CF ? CF : t;
+}
+
+function cbWire(){
+  const box = $('#cf');
+  box.addEventListener('focus', cbOpen);
+  box.addEventListener('click', cbOpen);
+  box.addEventListener('input', cbOpen);
+  box.addEventListener('keydown', e => {
+    if(e.key === 'Escape'){ box.value = CF; closeCb(); e.preventDefault(); return; }
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      const q = box.value.trim(), list = cfList();
+      if(!q) return pickCraft('');
+      if(list.indexOf(q) >= 0) return pickCraft(q);
+      const hit = list.filter(c => c.indexOf(q) >= 0)[0];
+      pickCraft(hit || q);              // 有相近的先选，没有就当新工艺
+    }
+  });
+  document.addEventListener('click', e => { if(!e.target.closest('.cb')) closeCb(); });
+}
+
+async function load(){
+  if(DIRTY.size && !confirm('有没保存的改动，刷新会丢掉。继续？')) return;
+  DIRTY.clear(); setSaveBtn();
+  const cf = CF;
+  const url = `/api/sheet?date=${$('#d').value}&process=${encodeURIComponent($('#p').value)}`
+            + `&craft=${encodeURIComponent(cf)}`
+            + `&scope=${MODE === 'multi' ? 'all' : $('#scope').value}&q=${encodeURIComponent($('#q').value.trim())}`
+            + `&sort=${encodeURIComponent(sortParam())}`
+            + (MODE === 'multi' ? '&multi=1' : '')
+            + `&limit=${$('#n').value}`;
+  const r = await (await fetch(url)).json();
+  if(r.error){ toast('❌ '+r.error, false); return; }
+  ROWS = r.rows || [];
+  render(r);
+}
+
+// 一行的数（订单数/需求数/已报/还差/进度）——
+//   匹配型：用服务端按「顶部工序+工艺」算好的值；
+//   一页多填：跟着**行内选中的那道工序**现算（服务端把每行各工序的数装在 o.byd 里）。
+// ⚠️ **还差 = 需求数 − 已报，不能拿订单数封顶**：有些工序/工艺要按倍数做
+//    （包装/PVD/推砂 ×4、镭射 拉手·脚仔 ×3.2…），封顶会把「已报 120 / 订单 24」判成做完。
+function nums(o, pr, reqIn){
+  let qty, cum, pv, bd;
+  if(MODE === 'multi'){
+    const b = (o.byd && o.byd[pr]) || null;
+    qty = o.order_qty || 0;
+    if(!b){                                   // 这行这道工序一条记录都没有 → 全新的活
+      const req0 = (reqIn != null && reqIn !== '') ? Number(reqIn) : qty;
+      return {qty, req: req0, cum: 0, pv: 0, bd: null, left: req0, done: 0, pend: 0};
+    }
+    cum = b.cum || 0; pv = b.prev || 0; bd = b.base_done || null;
+    if(b.qty) qty = b.qty;
+  } else {
+    qty = o.order_qty || 0; cum = o.cum || 0; pv = o.prev || 0; bd = o.base_done || null;
+  }
+  const req = (reqIn != null && reqIn !== '') ? Number(reqIn) : (o.req || qty);
+  const left = bd ? 0 : Math.max(req - cum - pv, 0);
+  const done = bd ? req : cum + pv;           // 已报**不封顶**：倍数工序超订单数是正常的
+  const pend = bd ? 100 : (req ? Math.min(100, Math.round((cum + pv) / req * 100)) : 0);
+  return {qty, req, cum, pv, bd, left, done, pend};
+}
+
+// 这一行的需求数：改过就用改过的（reqmap[工序][工艺]），否则 = 订单数
+function reqOf(o, pr, cf){
+  const m = (o.reqmap || {})[pr] || {};
+  const v = m[cf];
+  if(v != null && v !== '') return Number(v);
+  // 一页多填：行内换了别的工序 → 那道工序没改过就是订单数（别拿这行原工序的需求数顶替）
+  return MODE === 'multi' ? (o.order_qty || 0) : (o.req || o.order_qty || 0);
+}
+// 行内「需求数」格子的当前值（正在编辑的优先，否则按工序/工艺算出来的默认值）
+function rowReq(tr, o, pr){
+  const inp = tr.querySelector('input[data-f="req"]');
+  if(inp && inp.value !== '') return Number(inp.value);
+  return reqOf(o, pr, rowCraft(tr));
+}
+
+// 行内工序/工艺下拉
+// ⚠️ **初始只渲染「当前这一项」，点开/focus 时才把整个清单塞进去** ——
+// 一页多填 2000 行 ×（15 工序 + 60 工艺）= 十万个 <option>，不做这一步整页会卡到点不动（踩过）。
+const procOpts = sel => NPROC.map(p => `<option${p===sel?' selected':''}>${esc(p)}</option>`).join('');
+function craftOpts(pr, sel){
+  const list = (CRAFTS[pr] || []).slice();
+  for(const v of [CF, sel])                       // 顶部「默认工艺」+ 这行已填过的工艺，别丢
+    if(v && list.indexOf(v) < 0) list.push(v);
+  return '<option value="">（无工艺）</option>'
+       + list.map(c => `<option value="${esc(c)}"${c===sel?' selected':''}>${esc(c)}</option>`).join('');
+}
+// 展开这一行的下拉（保留当前值；工艺清单跟它自己的工序走）
+function fillSel(s){
+  const tr = s.closest('tr'); if(!tr) return;
+  const o = ROWS[+tr.dataset.i] || {};
+  if(s.dataset.f === 'process'){
+    if(s.dataset.filled === '1') return;
+    const v = s.value; s.innerHTML = procOpts(v); s.value = v || s.value; s.dataset.filled = '1';
+  } else {
+    const pr = rowProc(tr);
+    const rec = (o.tmd && o.tmd[pr]) || {};
+    const v = s.value;
+    s.innerHTML = craftOpts(pr, v || rec.craft || CF);
+    if(v) s.value = v;
+  }
+}
+const rowProc  = tr => MODE === 'multi' ? ((tr.querySelector('select[data-f="process"]')||{}).value || '') : $('#p').value;
+const rowCraft = tr => MODE === 'multi' ? ((tr.querySelector('select[data-f="craft"]')||{}).value || '') : CF;
+
+// 只重画一行的「已报／还差／进度」（换工序就地刷新，不用回服务端）
+function paintNums(tr){
+  const i = +tr.dataset.i, o = ROWS[i];
+  if(!o || o.whole || o.ref) return;
+  const pr = rowProc(tr);
+  const d = nums(o, pr, rowReq(tr, o, pr));
+  const mix = (o.craft_mix && o.craft_mix.length)
+      ? '本工序各工艺：' + esc(o.craft_mix.join(' / ')) + (CF ? '' : '　（未选工艺，已报取最靠后还没做完的那道）') : '';
+  tr.querySelector('.js-cum').innerHTML = d.req
+      ? `${d.done}${d.bd ? `<i class="prev" title="生产进度表里这道工序的实际完成时间（历史事实）">进度表 ${d.bd.slice(5).replace('-','/')}</i>`
+              : (d.pv ? `<i class="prev" title="已完成 = 本月 ${d.cum} + 上月 ${d.pv}">本月 ${d.cum}+上月 ${d.pv}</i>` : '')}`
+      : '';
+  const cumTd = tr.querySelector('.js-cum'); if(cumTd) cumTd.title = mix;
+  tr.querySelector('.js-left').innerHTML = d.req
+      ? `<span class="lr">${d.left}${d.left > 0 ? `<button class="fill" data-v="${d.left}" title="把还差 ${d.left} 填进今日完成">满</button>` : ''}</span>`
+      : '';
+  tr.querySelector('.js-pend').innerHTML =
+      `<span class="bar"><i style="width:${d.pend}%"></i></span><span style="font-size:11px;color:#8a97a6">${d.req ? d.pend + '%' : ''}</span>`;
+  // 需求数的 ×N 角标（需求 / 订单数）
+  const base = o.order_qty || 0, xf = tr.querySelector('.c-rq .xf');
+  if(xf) xf.textContent = (base && d.req && d.req !== base) ? '×' + (Math.round(d.req / base * 100) / 100) : '';
+  const b = tr.querySelector('button.fill');
+  if(b) b.onclick = () => {
+    const t = tr.querySelector('input[data-f="qty_ok"]'); if(!t) return;
+    t.value = b.dataset.v; t.dispatchEvent(new Event('input')); t.focus();
+  };
+  // ⚠️ recount 会遍历整张表 —— 整屏渲染时逐行调用就是 O(n²)（1272 行能把页面卡死），
+  // 所以批量渲染期间用 QUIET 压住，整屏画完再算一次。
+  if(MODE === 'multi' && !QUIET) recountMulti();
+}
+
+// 一页多填：页脚「还差／今日合计」跟着行内选的工序实时重算
+function recountMulti(){
+  if(MODE !== 'multi') return;
+  let left = 0, today = 0;
+  document.querySelectorAll('#tb tr').forEach(tr => {
+    const o = ROWS[+tr.dataset.i];
+    if(!o || o.whole || o.ref) return;
+    left += nums(o, rowProc(tr), rowReq(tr, o, rowProc(tr))).left || 0;
+    const q = tr.querySelector('input[data-f="qty_ok"]');
+    if(q) today += Number(q.value) || 0;
+  });
+  const a = $('#sumleft'), b = $('#sumtoday');
+  if(a) a.textContent = left; if(b) b.textContent = today;
+}
+
+function render(r){
+  LAST = r;
+  const isMulti = MODE === 'multi';
+  const tbl = document.querySelector('main table');
+  if(tbl) tbl.classList.toggle('multi', isMulti);
+  const tb = $('#tb');
+  if(!ROWS.length){
+    tb.innerHTML = `<tr><td colspan="15" class="empty">没有要填的订单 —— 换个工序，或把范围改成「全部」</td></tr>`;
+  } else {
+    tb.innerHTML = ROWS.map((o,i)=>{
+      // 一页多填：默认工序/工艺 = 这行自己的（清单外行带 eprocess），否则跟顶部走
+      const pr0 = (isMulti && o.eprocess) ? o.eprocess : $('#p').value;
+      const rec = (isMulti ? (o.tmd && o.tmd[pr0]) : (o.today || {})) || {};
+      const cf0 = isMulti ? (rec.craft || (o.ecraft ?? CF) || '') : CF;
+      const label = o.source==='人工' ? '<span class="tag hand">人工</span>'
+                  : o.source==='解析' ? '<span class="tag parsed">解析</span>'
+                  : o.source==='进度表' ? '<span class="tag base">进度表</span>'
+                  : o.source==='M3'   ? '<span class="tag m3">M3</span>'
+                  : '<span class="tag new">新</span>';
+      const cls = ['', (o.order_qty && o.left===0) ? 'done' : '', rec.id ? 'filled' : '',
+                   (o.whole || o.ref) ? 'wo' : ''].join(' ');
+      const over = o.dd && o.dd < TODAY ? '<span class="tag" style="background:#fdeaea;color:#c0392b">已逾期</span>' : '';
+      const sheetTag = (o.src_sheet && o.src_sheet !== '水槽')
+        ? `<span class="tag" style="background:#f0e8fb;color:#5b3b8a;margin-left:5px">${esc(o.src_sheet)}</span>`
+        : (o.kind ? `<span class="tag" style="background:#eef0f4;color:#5a6572;margin-left:5px" title="日报里有、进度表在产清单里没有，由日报同步登记成清单行">${esc(o.kind)}</span>` : '');
+      const ppCell = isMulti
+        ? ((o.whole || o.ref)
+            ? `<td class="c-pp"><span class="wo-note">${o.ref ? '配件口径，仅参考' : '整单口径，仅参考'}</span></td>`
+            : `<td class="c-pp">`
+              + `<select data-f="process" data-lazy="1" title="这行填哪道工序（点开选）"><option${pr0?' selected':''}>${esc(pr0)}</option></select>`
+              + `<select data-f="craft" data-lazy="1" title="这行的工艺；没有就选「无工艺」，清单里没有的先去上面「默认工艺」新建"><option value="${esc(cf0)}" selected>${cf0?esc(cf0):'（无工艺）'}</option></select>`
+              + `</td>`)
+        : '';
+      // 需求数（可改）：默认 = 订单数；要按倍数做的直接改这一格，×N 角标只是提示，别拿它算数
+      const rq0 = reqOf(o, pr0, cf0), rqBase = o.order_qty || 0;
+      const xf = (rqBase && rq0 && rq0 !== rqBase) ? '×' + (Math.round(rq0 / rqBase * 100) / 100) : '';
+      const rqCell = (o.whole || o.ref)
+        ? `<td class="num c-rq" title="${o.whole ? '整单需求 = 各颜色需求相加' : '配件口径，不计还差'}">${o.ref ? '' : (o.req || o.order_qty || '')}</td>`
+        : `<td class="c-rq" title="需求数：默认 = 订单数；要按倍数做的直接改这一格 → 还差 = 需求数 − 已报，改完保存会记住">`
+          + `<span class="xf">${xf}</span><input type="number" min="0" step="1" data-f="req" value="${rq0 || ''}"></td>`;
+      return `<tr class="${cls}" data-i="${i}" data-k="${esc(key(o))}" data-pr="${esc(pr0)}">
+        <td class="num" style="color:#9aa7b4">${i+1}</td>
+        <td class="ono" title="${o.src_row ? `进度表【${esc(o.src_sheet||'')}】第 ${o.src_row} 行` : (o.kind ? esc(o.kind) + '：日报同步登记的清单外行' : '')}">${esc(o.order_no)}${sheetTag}</td>
+        <td>${esc(o.model)}</td>
+        <td>${o.whole
+              ? '<span class="whole" title="车间报表按整单报（不分颜色），这行只是给你看整单进度；要填日报请填上面同订单同型号的颜色行">车间整单<br><i>仅参考·不可填</i></span>'
+              : o.ref
+              ? '<span class="whole" title="日报按配件品号报（订单在在产清单里，但清单没有这条型号行）—— 件数口径跟水槽订单数不是一回事，所以只显示、不计进还差">配件·仅参考<br><i>不可填</i></span>'
+              : esc(o.surface||'')}</td>
+        ${ppCell}
+        <td class="num">${o.order_qty||''}</td>
+        ${rqCell}
+        <td class="num js-cum"></td>
+        <td class="num js-left"></td>
+        <td class="js-pend"></td>
+        ${(o.whole || o.ref)
+          ? `<td class="c-ok wo">—</td><td class="c-ng wo">—</td><td class="c-rm wo"><span class="wo-note">${o.ref ? '配件口径，不计进还差' : '整单口径，按颜色分行后才好填'}</span></td>`
+          : `<td class="c-ok"><input type="number" min="0" step="1" value="${rec.qty_ok??''}" data-f="qty_ok"></td>
+        <td class="c-ng"><input type="number" min="0" step="1" value="${rec.qty_ng??''}" data-f="qty_ng"></td>
+        <td class="c-rm"><input type="text" value="${esc(rec.remark??'')}" data-f="remark" placeholder="${rec.operator?'上次 '+esc(rec.operator):''}"></td>`}
+        <td>${esc(o.dd||'')} ${over}</td>
+        <td>${label}</td></tr>`;
+    }).join('');
+    tb.querySelectorAll('input').forEach(inp=>{
+      inp.addEventListener('input', () => {
+        mark(inp);
+        // 改了「需求数」→ 这行的还差/进度立刻按新的需求数重算
+        if(inp.dataset.f === 'req') paintNums(inp.closest('tr'));
+      });
+      inp.addEventListener('keydown', e => move(e, inp));
+    });
+    // 一页多填：行内换工序 → 自己的工艺下拉跟着换，已报/还差/进度就地重算
+    tb.querySelectorAll('select[data-f="process"]').forEach(s => {
+      s.onchange = () => {
+        const tr = s.closest('tr'), o = ROWS[+tr.dataset.i], pr = s.value;
+        tr.dataset.pr = pr;
+        const rec = (o.tmd && o.tmd[pr]) || {};
+        const cr = tr.querySelector('select[data-f="craft"]');
+        cr.innerHTML = craftOpts(pr, rec.craft || CF);      // 换工序 → 工艺清单跟着换
+        cr.value = rec.craft || CF;
+        // 输入格也切到这道工序今天的数（不然会把上一道的数写过一道去）
+        const setv = (f, v) => { const el = tr.querySelector(`input[data-f="${f}"]`); if(el) el.value = (v ?? ''); };
+        setv('qty_ok', rec.qty_ok); setv('qty_ng', rec.qty_ng); setv('remark', rec.remark);
+        const rq = tr.querySelector('input[data-f="req"]'); // 需求数也换成这道的（改过的会带出来）
+        if(rq) rq.value = reqOf(o, pr, cr.value) || '';
+        paintNums(tr); markSel(tr);
+      };
+    });
+    tb.querySelectorAll('select[data-f="craft"]').forEach(s => s.onchange = () => {
+      const tr = s.closest('tr'), o = ROWS[+tr.dataset.i];
+      const rq = tr.querySelector('input[data-f="req"]');
+      if(rq) rq.value = reqOf(o, rowProc(tr), s.value) || '';
+      paintNums(tr); markSel(tr);
+    });
+    // 下拉清单按需展开（初始只有当前项，省 DOM）
+    tb.querySelectorAll('select[data-lazy="1"]').forEach(s => {
+      s.addEventListener('focus', () => fillSel(s));
+      s.addEventListener('mousedown', () => fillSel(s));
+    });
+    const trs = [...tb.children];
+    QUIET = true;                                   // 渲染期间不做整表重算（O(n²)）
+    trs.forEach(tr => paintNums(tr));
+    QUIET = false;
+    if(isMulti) recountMulti();
+  }
+  const sum = (r.summary.orders||0);
+  $('#sum').innerHTML = `本页 <b>${sum}</b> 单 · 已做完 <b>${r.summary.done}</b> ·`
+      + ` 今日合计 <b id="sumtoday">${r.summary.today_qty}</b> 件 · 还差 <b id="sumleft">${r.summary.left_qty}</b> 件`
+      + (isMulti ? ` <span style="color:#5a6572">（一页多填：还差/今日合计按每行当前选的工序算）</span>` : '')
+      + ((r.summary.skipped_base||0) ? ` · <span style="color:#5a6572">已按进度表跳过 ${r.summary.skipped_base} 条已完成</span>` : '')
+      + ((r.summary.skipped_done||0) ? ` · <span style="color:#5a6572">本月已够数的 ${r.summary.skipped_done} 条（已跳过）</span>` : '')
+      + ((r.summary.extras_fillable||0) ? ` · <span style="color:#5a6572">补料·加单 ${r.summary.extras_fillable} 条（报表里有、进度表在产清单没有，可填）</span>` : '')
+      + ((r.summary.extras_ref||0) ? ` · <span style="color:#5a6572">配件 ${r.summary.extras_ref} 条仅参考（不计还差）</span>` : '')
+      + (SKEYS.length ? ` · <span style="color:#5a6572">按 ${sortLabel()} 排</span>` : '');
+  $('#footnote').textContent = (r.matched > r.shown
+      ? `清单里符合的有 ${r.matched} 单，本页只显示前 ${r.shown} 单 —— 用搜索缩小范围。`
+      : (isMulti
+          ? '一页多填：每行自己选「工序 + 工艺」，一屏能把几道工序一起填；改工序后已报/还差跟着那道工序走。回车跳下一行；整单/配件参考行不能填。'
+          : '填完回车跳下一行；点「满」= 把还差整个填进今日完成；在 Excel 里复制一列（或多列）粘到任意一格，会从那一行往下依次填。清空某行再保存 = 撤销那天的记录。'))
+      + ((!isMulti && !CF) ? '  ⚠ 未选工艺：已报/还差按本工序各工艺里「最靠后还没做完」的那道算，选具体工艺更准。' : '')
+      + `  库：${DB}`;
+  if(isMulti) recountMulti();
+}
+
+// 一页多填：**同一行可以填好几道工序**（一屏多填的本意），所以 DIRTY 的键要带上工序+工艺，
+// 否则第二次填的会把第一次的覆盖掉（同一行两个工序只存住最后一条）。匹配型还是按行一个键。
+const dkey = tr => MODE === 'multi'
+    ? tr.dataset.k + '|' + rowProc(tr) + '|' + rowCraft(tr) : tr.dataset.k;
+
+function mark(inp){
+  const tr = inp.closest('tr'); const k = dkey(tr);
+  const cur = DIRTY.get(k) || {order_no:'', model:''};
+  const i = +tr.dataset.i; cur.order_no = ROWS[i].order_no; cur.model = ROWS[i].model;
+  cur.surface = ROWS[i].surface || '';
+  cur[inp.dataset.f] = inp.value;
+  cur.process = rowProc(tr); cur.craft = rowCraft(tr);   // 一页多填：工序/工艺是行的一部分
+  DIRTY.set(k, cur); tr.classList.add('dirty'); setSaveBtn();
+  if(MODE === 'multi') recountMulti();
+}
+
+// 一页多填：行内换了工序/工艺。**只点了下拉菜单、什么都没填** 不算改动（否则满屏「待保存」），
+// 但这行今天本来就有记录 → 算改动（换了工序就该写过去）。
+function markSel(tr){
+  if(MODE !== 'multi') return;
+  const o = ROWS[+tr.dataset.i], k = dkey(tr);
+  if(!o) return;
+  const F = ['qty_ok', 'qty_ng', 'remark'];
+  const vals = F.map(f => ((tr.querySelector(`input[data-f="${f}"]`) || {}).value) || '');
+  const hadToday = !!(o.tmd && Object.keys(o.tmd).length);
+  if(!hadToday && !DIRTY.has(k) && !vals.some(v => v !== '')) return;
+  const cur = DIRTY.get(k) || {order_no:o.order_no, model:o.model, surface:o.surface || ''};
+  F.forEach((f, idx) => { cur[f] = vals[idx]; });
+  cur.process = rowProc(tr); cur.craft = rowCraft(tr);
+  const rq = tr.querySelector('input[data-f="req"]');
+  if(rq) cur.req = rq.value;
+  DIRTY.set(k, cur); tr.classList.add('dirty'); setSaveBtn();
+}
+
+function setSaveBtn(){
+  const b = $('#save');
+  b.disabled = DIRTY.size === 0;
+  b.classList.toggle('dirty', DIRTY.size > 0);
+  b.textContent = DIRTY.size ? `保存改动 (${DIRTY.size})` : '保存改动';
+}
+
+function move(e, inp){
+  if(e.key !== 'Enter') return;
+  e.preventDefault();
+  const tr = inp.closest('tr'); const f = inp.dataset.f;
+  const nxt = tr.nextElementSibling;
+  if(e.shiftKey || !nxt) return;
+  const t = nxt.querySelector(`input[data-f="${f}"]`); if(t) t.focus();
+}
+
+async function save(){
+  if(!DIRTY.size) return;
+  const multi = MODE === 'multi';
+  const rows = [...DIRTY.values()].map(v => ({
+    order_no: v.order_no, model: v.model, surface: v.surface ?? '',
+    qty_ok: v.qty_ok ?? 0, qty_ng: v.qty_ng ?? 0,
+    qty_remain: v.qty_remain ?? '', remark: v.remark ?? '', part: v.part ?? '',
+    req: v.req ?? '',        // 需求数（改过才带；== 订单数 服务端会当没改删掉覆盖）
+    // 一页多填：一行一道工序，工序/工艺跟着行走（服务端行里有就用行的）
+    ...(multi ? {process: v.process || $('#p').value, craft: v.craft ?? ''} : {})
+  }));
+  let cf = '';
+  if(!multi){                            // 匹配型：顶层工艺兜底 + 敲了新工艺没回车也照样存
+    cf = cbCurrent();
+    CF = cf; $('#cf').value = cf;
+    rememberCraft(cf);
+  }
+  const body = {work_date:$('#d').value, process:$('#p').value, craft:cf,
+                operator:$('#op').value, rows};
+  const res = await fetch('/api/submit_batch', {method:'POST',
+      headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+  const j = await res.json();
+  if(!res.ok){
+    const lines = (j.errors||[]).slice(0,8).map(e=>`第${e.row}行 ${e.order||''}：${e.error}`).join('\n');
+    toast('❌ ' + (j.error||'保存失败') + (lines ? '\n' + lines : ''), false);
+    return;
+  }
+  toast(`✅ 保存 ${j.saved} 条` + (j.deleted?`，撤销 ${j.deleted} 条`:'')
+        + (j.reqs?`，需求数改了 ${j.reqs} 条`:'')
+        + (j.skipped?`，跳过空行 ${j.skipped}`:'')
+        + ((j.hints&&j.hints.length)?`　⚠ ${j.hints.length} 条工艺提示`:''));
+  DIRTY.clear(); setSaveBtn(); load();
+}
+
+$('#save').onclick = save;
+$('#reload').onclick = load;
+// 批量录：在 Excel / WPS 里复制一列或一块，粘到表格任意输入格 —— 从那一行往下依次填。
+// 单格粘贴（没换行没制表符）走浏览器默认，不拦。
+document.addEventListener('paste', e => {
+  const inp = e.target.closest && e.target.closest('#tb input[data-f]');
+  if(!inp) return;
+  const txt = (e.clipboardData || window.clipboardData).getData('text') || '';
+  if(txt.indexOf('\n') < 0 && txt.indexOf('\t') < 0) return;
+  e.preventDefault();
+  // 顺序必须跟表头一致（需求数 → 今日完成 → 不良 → 备注），否则粘一块会填错列
+  const FIELDS = ['req', 'qty_ok', 'qty_ng', 'remark'];
+  const trs = [...document.querySelectorAll('#tb tr')];
+  const start = trs.indexOf(inp.closest('tr'));
+  const c0 = FIELDS.indexOf(inp.dataset.f || 'qty_ok');
+  let n = 0;
+  txt.replace(/\r/g, '').replace(/\n+$/, '').split('\n').forEach((line, ri) => {
+    const tr = trs[start + ri];
+    if(!tr) return;
+    line.split('\t').forEach((val, ci) => {
+      const f = FIELDS[c0 + ci];
+      const t = f && tr.querySelector(`input[data-f="${f}"]`);   // 整单参考行没有输入框 → 跳过
+      if(!t) return;
+      t.value = val.trim(); t.dispatchEvent(new Event('input')); n++;
+    });
+  });
+  toast(`📋 粘贴填了 ${n} 格` + (n ? '' : '（那几行没输入框？整单参考行不能填）'));
+});
+['#d','#scope'].forEach(s => $(s).onchange = load);   // #p 的 handler 在 boot 里（要联动工艺）
+$('#q').oninput = () => { clearTimeout(TIMER); TIMER = setTimeout(load, 300); };
+document.addEventListener('keydown', e => {
+  if((e.ctrlKey||e.metaKey) && e.key==='s'){ e.preventDefault(); save(); }
+});
+window.addEventListener('beforeunload', e => { if(DIRTY.size){ e.preventDefault(); e.returnValue=''; }});
+boot();
+</script>
+</body>
+</html>
