@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>采购情况（临时）</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Noto Sans SC",sans-serif;
+         background:#fafafa; color:#1a1a1a; padding:28px 40px 60px; min-height:100vh; }
+  .layout { max-width:1440px; margin:0 auto; }
+  .back { font-size:12px; color:#999; text-decoration:none; display:inline-block; margin-bottom:18px; }
+  .back:hover { color:#1a1a1a; }
+  .head { display:flex; align-items:baseline; gap:16px; margin-bottom:6px; }
+  h1 { font-size:22px; font-weight:700; }
+  .tag { font-size:11px; color:#b26a00; background:#fff4e0; border:1px solid #ffd8a8;
+         border-radius:3px; padding:2px 6px; }
+  .sub { font-size:12px; color:#999; margin-bottom:20px; }
+
+  .panel { background:#fff; border:1px solid #e6e6e6; border-radius:6px; padding:22px 24px; margin-bottom:18px; }
+  .panel h3 { font-size:14px; font-weight:700; margin-bottom:6px; }
+  .panel p { font-size:12.5px; color:#666; line-height:1.9; }
+  .panel code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px;
+                background:#f5f5f5; padding:1px 5px; border-radius:3px; }
+  .steps { display:flex; gap:0; margin:16px 0 4px; flex-wrap:wrap; }
+  .steps div { flex:1 1 0; min-width:140px; font-size:12px; color:#555; position:relative;
+               padding-right:22px; line-height:1.6; }
+  .steps div:not(:last-child)::after { content:"→"; position:absolute; right:6px; color:#ccc; }
+  .steps b { display:block; color:#1a1a1a; font-size:12.5px; margin-bottom:2px; }
+  .bar { display:flex; gap:8px; margin-top:16px; }
+  input { flex:0 0 320px; padding:9px 12px; border:1px solid #ddd; border-radius:4px; font-size:14px;
+          font-family:inherit; background:#fff; }
+  button { padding:9px 18px; border:1px solid #1a1a1a; background:#1a1a1a; color:#fff; border-radius:4px;
+           font-size:14px; cursor:pointer; font-family:inherit; }
+  .note { font-size:11.5px; color:#999; margin-top:10px; }
+
+  .shot { border:1px solid #e6e6e6; border-radius:6px; overflow:hidden; background:#fff; }
+  .shot-bar { font-size:11.5px; color:#888; padding:8px 14px; background:#f5f5f5; border-bottom:1px solid #e6e6e6; }
+  iframe { width:100%; height:900px; border:none; display:block; background:#fafafa; }
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <a class="back" href="/">← 返回 SEDN 内部平台</a>
+  <div class="head">
+    <h1>采购情况</h1>
+    <span class="tag">临时</span>
+  </div>
+  <div class="sub">按内部订单号查一张订单的采购全链路：订单 → DD → 采购底稿 → 采购单 → 回货</div>
+
+  <div class="panel">
+    <h3>这个页面怎么用</h3>
+    <div class="steps">
+      <div><b>① 订单 / DD</b>输入内部订单号（S26-10-15）或 DD 单号（DD202610190010），带出审核状态</div>
+      <div><b>② 采购底稿</b>订单下已做的底稿、审核状态、有没有转成采购单</div>
+      <div><b>③ 采购单</b>转出的采购单号、供应商、审核状态（审核通过 = 已下单给供应商）</div>
+      <div><b>④ 回货</b>逐品号看迟交 / 未到期 / 已到货，带进货单、收料单</div>
+    </div>
+    <p style="margin-top:14px">数据由本机服务实时查 ERP（<code>:8777</code>，只读 SELECT，不落库）。
+       如果下面的框打不开，说明本机服务没起，双击桌面「Hermes全启动.bat」或让我重起一次。</p>
+    <div class="bar">
+      <input id="no" placeholder="S26-10-15 / DD202610190010" autocomplete="off">
+      <button id="open">在内嵌页打开</button>
+    </div>
+    <div class="note">也有独立公网入口（需另开 Cloudflare 子域名）：http://localhost:8777/　示例：
+      <a href="http://localhost:8777/?no=S26-10-25">S26-10-25</a></div>
+  </div>
+
+  <div class="shot">
+    <div class="shot-bar">示例：S26-10-15（实时加载，等于内嵌了上面那个页面）</div>
+    <iframe id="frame" src="http://localhost:8777/?no=S26-10-15"></iframe>
+  </div>
+
+</div>
+<script>
+document.getElementById('open').onclick = () => {
+  const no = document.getElementById('no').value.trim();
+  document.getElementById('frame').src = 'http://localhost:8777/' + (no ? '?no=' + encodeURIComponent(no) : '');
+};
+document.getElementById('no').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('open').click();
+});
+</script>
+</body>
+</html>
