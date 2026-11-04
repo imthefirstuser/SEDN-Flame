@@ -34,9 +34,7 @@
            font-size:14px; cursor:pointer; font-family:inherit; }
   .note { font-size:11.5px; color:#999; margin-top:10px; }
 
-  .shot { border:1px solid #e6e6e6; border-radius:6px; overflow:hidden; background:#fff; }
-  .shot-bar { font-size:11.5px; color:#888; padding:8px 14px; background:#f5f5f5; border-bottom:1px solid #e6e6e6; }
-  iframe { width:100%; height:900px; border:none; display:block; background:#fafafa; }
+  a { color:#1a56db; }
 </style>
 </head>
 <body>
@@ -57,26 +55,28 @@
       <div><b>③ 采购单</b>转出的采购单号、供应商、审核状态（审核通过 = 已下单给供应商）</div>
       <div><b>④ 回货</b>逐品号看迟交 / 未到期 / 已到货，带进货单、收料单</div>
     </div>
-    <p style="margin-top:14px">数据由本机服务实时查 ERP（<code>:8777</code>，只读 SELECT，不落库）。
-       如果下面的框打不开，说明本机服务没起，双击桌面「Hermes全启动.bat」或让我重起一次。</p>
+    <p style="margin-top:14px">页面服务：<code>apps.sedn-group.com/purchase</code>（本机 <code>:8777</code>）。打不开就是本机服务没起，
+       双击桌面「Hermes全启动.bat」或让我重起一次。</p>
     <div class="bar">
       <input id="no" placeholder="S26-10-15 / DD202610190010" autocomplete="off">
-      <button id="open">在内嵌页打开</button>
+      <button id="open">打开这个单号</button>
     </div>
-    <div class="note">也有独立公网入口（需另开 Cloudflare 子域名）：http://localhost:8777/　示例：
-      <a href="http://localhost:8777/?no=S26-10-25">S26-10-25</a></div>
+    <div class="note">数据查到即止，不写库；查不到的品号/单据会留空，不猜。</div>
   </div>
 
-  <div class="shot">
-    <div class="shot-bar">示例：S26-10-15（实时加载，等于内嵌了上面那个页面）</div>
-    <iframe id="frame" src="http://localhost:8777/?no=S26-10-15"></iframe>
+  <div class="panel" style="margin-top:18px">
+    <h3>打开</h3>
+    <p>公网地址（统一入口，按路径分发；以后新页面都挂在 <code>apps.sedn-group.com/&lt;名字&gt;</code> 下）：
+      <a href="https://apps.sedn-group.com/purchase/">apps.sedn-group.com/purchase/</a>　
+      示例：<a href="https://apps.sedn-group.com/purchase/?no=S26-10-15">S26-10-15</a> /
+      <a href="https://apps.sedn-group.com/purchase/?no=S26-10-25">S26-10-25</a></p>
   </div>
 
 </div>
 <script>
 document.getElementById('open').onclick = () => {
   const no = document.getElementById('no').value.trim();
-  document.getElementById('frame').src = 'http://localhost:8777/' + (no ? '?no=' + encodeURIComponent(no) : '');
+  location.href = 'https://apps.sedn-group.com/purchase/' + (no ? '?no=' + encodeURIComponent(no) : '');
 };
 document.getElementById('no').addEventListener('keydown', e => {
   if (e.key === 'Enter') document.getElementById('open').click();
